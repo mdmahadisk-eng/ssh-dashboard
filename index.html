@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Device Center | VanDyke XML Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SSH Device Dashboard | Click IP to Copy</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', system-ui, 'Segoe UI', monospace;
+            font-family: 'Inter', system-ui, 'Segoe UI', 'Fira Code', monospace;
         }
 
         body {
@@ -52,6 +52,11 @@
             content: "⚡";
             font-size: 1.8rem;
             filter: drop-shadow(0 0 4px cyan);
+        }
+        .sub {
+            font-size: 0.7rem;
+            color: #6c8ca0;
+            margin-top: 8px;
         }
 
         .action-bar {
@@ -205,6 +210,17 @@
             font-weight: 500;
             color: #7fcdff;
             border: 1px solid #2a6f93;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .ip-badge:hover {
+            background: #0ff2;
+            color: cyan;
+            border-color: cyan;
+            transform: scale(1.02);
+        }
+        .ip-badge:active {
+            transform: scale(0.98);
         }
 
         .empty-state {
@@ -244,6 +260,7 @@
 <div class="dashboard">
     <div class="dashboard-header">
         <h1>DEVICE CENTER</h1>
+        <div class="sub">📋 IP তে ক্লিক করলেই কপি হবে</div>
     </div>
 
     <div class="action-bar">
@@ -267,7 +284,7 @@
 
     <div class="device-container" id="devicesContainer">
         <div class="device-grid" id="devicesGrid">
-            <div class="empty-state">📂 upload VanDyke SecureCRT XML<br>sessions will appear centered</div>
+            <div class="empty-state">📂 upload VanDyke SecureCRT XML<br>click on any IP to copy</div>
         </div>
     </div>
 </div>
@@ -290,7 +307,7 @@
             div.innerHTML = `⚡ ${msg}`;
             if(isErr) div.style.borderLeftColor = '#f66';
             document.body.appendChild(div);
-            setTimeout(() => div.remove(), 2500);
+            setTimeout(() => div.remove(), 2000);
         }
 
         function getShortName(fullPath) {
@@ -405,6 +422,16 @@
             localStorage.setItem('ssh_devices_backup', JSON.stringify(allDevices));
         }
 
+        // কপি ফাংশন
+        async function copyToClipboard(text, type) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showMsg(`📋 ${type} কপি: ${text}`);
+            } catch(err) {
+                showMsg(`❌ কপি ব্যর্থ`, true);
+            }
+        }
+
         function renderDevices() {
             const query = searchBox.value.trim().toLowerCase();
             let filtered = allDevices;
@@ -416,7 +443,7 @@
             }
             if(filtered.length === 0) {
                 if(allDevices.length === 0) {
-                    devicesGrid.innerHTML = `<div class="empty-state">📂 Upload VanDyke XML file<br>Sessions will appear centered</div>`;
+                    devicesGrid.innerHTML = `<div class="empty-state">📂 Upload VanDyke XML file<br>click on any IP to copy</div>`;
                 } else {
                     devicesGrid.innerHTML = `<div class="empty-state">🔍 no matching devices</div>`;
                 }
@@ -426,17 +453,30 @@
             let html = '';
             for(let dev of filtered) {
                 const portShow = (dev.port && dev.port !== '22') ? `:${dev.port}` : '';
+                const displayIp = dev.host + portShow;
                 html += `
                     <div class="device-row">
                         <div class="device-name">
                             🖧 ${escapeHtml(dev.display)}
-                            <span class="ip-badge">${escapeHtml(dev.host)}${portShow}</span>
+                            <span class="ip-badge" data-ip="${escapeHtml(dev.host)}" data-port="${escapeHtml(dev.port)}">${escapeHtml(displayIp)}</span>
                         </div>
                     </div>
                 `;
             }
             devicesGrid.innerHTML = html;
             totalSpan.innerText = allDevices.length;
+
+            // প্রতিটি IP ব্যাজে ক্লিক ইভেন্ট যোগ করুন
+            document.querySelectorAll('.ip-badge').forEach(badge => {
+                badge.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const ip = badge.getAttribute('data-ip');
+                    const port = badge.getAttribute('data-port');
+                    let copyText = ip;
+                    if(port && port !== '22') copyText += `:${port}`;
+                    copyToClipboard(copyText, 'IP');
+                });
+            });
         }
 
         function escapeHtml(str) {
