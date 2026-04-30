@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Center | VanDyke XML Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, 'Segoe UI', monospace;
+        }
+
+        body {
+            background: #07111f;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dashboard {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(8, 18, 28, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 2rem;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(95deg, #021a2b, #030d19);
+            padding: 1.4rem 2rem;
+            border-bottom: 1px solid #0ff2;
+            text-align: center;
+        }
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: #a0f0ff;
+            letter-spacing: -0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .dashboard-header h1::before {
+            content: "⚡";
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 4px cyan);
+        }
+
+        .action-bar {
+            background: #07131fcc;
+            padding: 1.2rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            align-items: flex-end;
+            justify-content: center;
+            border-bottom: 1px solid #1f3a4b;
+        }
+
+        .upload-group, .search-group {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .upload-group label, .search-group label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            color: #7fcdff;
+            margin-bottom: 0.4rem;
+            display: block;
+        }
+
+        .file-wrapper {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .custom-file {
+            background: #0a1929;
+            border: 1px solid #2c5a7a;
+            padding: 0.6rem 1.2rem;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #b9f3ff;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .custom-file:hover {
+            background: #1e4a6e;
+            border-color: #0ff;
+            color: white;
+            box-shadow: 0 0 8px #0ff3;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #2c5a7a;
+            padding: 0.6rem 1.2rem;
+            border-radius: 60px;
+            color: #b0e0ff;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-outline:hover {
+            background: #1e3a5f;
+            border-color: #0ff;
+        }
+
+        .search-box {
+            background: #0a1929;
+            border: 1px solid #2c5a7a;
+            border-radius: 60px;
+            padding: 0.65rem 1.2rem;
+            width: 100%;
+            color: #e2f0ff;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-box:focus {
+            border-color: #0ff;
+            box-shadow: 0 0 0 2px #0ff2;
+        }
+
+        .stats {
+            background: #030f18;
+            padding: 0.6rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid #1f4055;
+            font-size: 0.8rem;
+            color: #7ac7e0;
+        }
+
+        .device-container {
+            padding: 1.6rem 2rem;
+            background: #020c14;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .device-grid {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .device-row {
+            background: linear-gradient(105deg, #0a1722, #05101c);
+            border-radius: 1.2rem;
+            padding: 0.9rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+            border: 1px solid #1c415a;
+            width: 100%;
+        }
+
+        .device-row:hover {
+            border-color: #0ff;
+            background: #0e1e2e;
+            transform: translateX(6px);
+            box-shadow: 0 4px 12px rgba(0, 255, 255, 0.1);
+        }
+
+        .device-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #b8f2ff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .ip-badge {
+            font-family: 'Fira Code', monospace;
+            background: #071e2c;
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #7fcdff;
+            border: 1px solid #2a6f93;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: #0a131f80;
+            border-radius: 1.5rem;
+            color: #6c8ca0;
+            font-size: 0.9rem;
+            border: 1px dashed #2f6c8f;
+            width: 100%;
+        }
+
+        @media (max-width: 680px) {
+            body { padding: 1rem; }
+            .device-row { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+            .device-name { justify-content: center; }
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0a2c3c;
+            border-left: 4px solid #0ff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            color: white;
+            font-size: 0.8rem;
+            z-index: 1000;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 12px black;
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>DEVICE CENTER</h1>
+    </div>
+
+    <div class="action-bar">
+        <div class="upload-group">
+            <label>📂 XML FILE</label>
+            <div class="file-wrapper">
+                <input type="file" id="xmlUploader" accept=".xml, .XML, text/xml">
+                <label for="xmlUploader" class="custom-file">📁 Browse XML</label>
+                <button id="clearBtn" class="btn-outline">🗑 Clear</button>
+            </div>
+        </div>
+        <div class="search-group">
+            <label>🔍 SEARCH</label>
+            <input type="text" id="searchInput" class="search-box" placeholder="name or IP ...">
+        </div>
+    </div>
+
+    <div class="stats">
+        <span>📟 total devices: <strong id="totalCount">0</strong></span>
+    </div>
+
+    <div class="device-container" id="devicesContainer">
+        <div class="device-grid" id="devicesGrid">
+            <div class="empty-state">📂 upload VanDyke SecureCRT XML<br>sessions will appear centered</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const fileInput = document.getElementById('xmlUploader');
+        const clearBtn = document.getElementById('clearBtn');
+        const searchBox = document.getElementById('searchInput');
+        const devicesGrid = document.getElementById('devicesGrid');
+        const totalSpan = document.getElementById('totalCount');
+
+        let allDevices = []; // { displayName, host, port }
+
+        function showMsg(msg, isErr = false) {
+            let old = document.querySelector('.toast-msg');
+            if(old) old.remove();
+            let div = document.createElement('div');
+            div.className = 'toast-msg';
+            div.innerHTML = `⚡ ${msg}`;
+            if(isErr) div.style.borderLeftColor = '#f66';
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 2500);
+        }
+
+        function getShortName(fullPath) {
+            if(!fullPath) return 'device';
+            let parts = fullPath.split('/');
+            return parts[parts.length-1];
+        }
+
+        function parseSessions(node, currentPath = '') {
+            let results = [];
+            if(node.tagName === 'key') {
+                const keyName = node.getAttribute('name');
+                const childKeys = Array.from(node.children).filter(c => c.tagName === 'key');
+                if(childKeys.length > 0) {
+                    for(let c of childKeys) {
+                        results.push(...parseSessions(c, currentPath ? `${currentPath}/${keyName}` : keyName));
+                    }
+                } else {
+                    let host = null, port = null;
+                    for(let child of node.children) {
+                        const tag = child.tagName;
+                        const nameAttr = child.getAttribute('name');
+                        if(tag === 'string' && nameAttr === 'Hostname') host = child.textContent.trim();
+                        if(tag === 'dword' && nameAttr === 'Port') port = child.textContent.trim();
+                        if(tag === 'string' && nameAttr === 'Protocol Name') {
+                            let proto = child.textContent.trim();
+                            if(!port && proto === 'Telnet') port = '23';
+                        }
+                    }
+                    if(host && host !== "") {
+                        let full = currentPath ? `${currentPath}/${keyName}` : keyName;
+                        results.push({
+                            full: full,
+                            display: getShortName(full),
+                            host: host,
+                            port: port || '22'
+                        });
+                    }
+                }
+            } else {
+                for(let child of node.children) {
+                    results.push(...parseSessions(child, currentPath));
+                }
+            }
+            return results;
+        }
+
+        function extractFromVanDyke(xmlText) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xmlText, "application/xml");
+            const err = doc.querySelector('parsererror');
+            if(err) throw new Error('XML parse error');
+            let sessionsKey = null;
+            const keys = doc.getElementsByTagName('key');
+            for(let k of keys) {
+                if(k.getAttribute('name') === 'Sessions') {
+                    sessionsKey = k;
+                    break;
+                }
+            }
+            if(!sessionsKey) throw new Error('No <key name="Sessions"> found');
+            return parseSessions(sessionsKey);
+        }
+
+        function fallbackExtract(xmlText) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xmlText, "application/xml");
+            let list = [];
+            const keys = doc.getElementsByTagName('key');
+            for(let k of keys) {
+                let host = null, port = null;
+                for(let child of k.children) {
+                    if(child.tagName === 'string' && child.getAttribute('name') === 'Hostname') host = child.textContent.trim();
+                    if(child.tagName === 'dword' && child.getAttribute('name') === 'Port') port = child.textContent.trim();
+                }
+                if(host) {
+                    let nameRaw = k.getAttribute('name') || 'device';
+                    list.push({
+                        full: nameRaw,
+                        display: getShortName(nameRaw),
+                        host: host,
+                        port: port || '22'
+                    });
+                }
+            }
+            return list;
+        }
+
+        async function loadXml(file) {
+            showMsg(`⏳ reading ${file.name}...`);
+            const text = await file.text();
+            let devices = [];
+            try {
+                devices = extractFromVanDyke(text);
+            } catch(e) {
+                console.warn("primary fail", e);
+                devices = fallbackExtract(text);
+            }
+            if(devices.length === 0) throw new Error("no valid session (hostname) found");
+            const unique = [];
+            const seen = new Set();
+            for(let d of devices) {
+                const key = `${d.host}:${d.port}`;
+                if(!seen.has(key)) {
+                    seen.add(key);
+                    unique.push(d);
+                }
+            }
+            allDevices = unique;
+            renderDevices();
+            showMsg(`✅ ${allDevices.length} devices loaded`);
+            localStorage.setItem('ssh_devices_backup', JSON.stringify(allDevices));
+        }
+
+        function renderDevices() {
+            const query = searchBox.value.trim().toLowerCase();
+            let filtered = allDevices;
+            if(query) {
+                filtered = allDevices.filter(d => 
+                    d.display.toLowerCase().includes(query) || 
+                    d.host.toLowerCase().includes(query)
+                );
+            }
+            if(filtered.length === 0) {
+                if(allDevices.length === 0) {
+                    devicesGrid.innerHTML = `<div class="empty-state">📂 Upload VanDyke XML file<br>Sessions will appear centered</div>`;
+                } else {
+                    devicesGrid.innerHTML = `<div class="empty-state">🔍 no matching devices</div>`;
+                }
+                totalSpan.innerText = allDevices.length;
+                return;
+            }
+            let html = '';
+            for(let dev of filtered) {
+                const portShow = (dev.port && dev.port !== '22') ? `:${dev.port}` : '';
+                html += `
+                    <div class="device-row">
+                        <div class="device-name">
+                            🖧 ${escapeHtml(dev.display)}
+                            <span class="ip-badge">${escapeHtml(dev.host)}${portShow}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            devicesGrid.innerHTML = html;
+            totalSpan.innerText = allDevices.length;
+        }
+
+        function escapeHtml(str) {
+            if(!str) return '';
+            return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+        }
+
+        function clearAll() {
+            if(allDevices.length && confirm('Clear all devices?')) {
+                allDevices = [];
+                renderDevices();
+                localStorage.removeItem('ssh_devices_backup');
+                showMsg('🧹 cleared');
+            } else if(allDevices.length === 0) {
+                showMsg('nothing to clear');
+            }
+        }
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('ssh_devices_backup');
+            if(saved) {
+                try {
+                    let parsed = JSON.parse(saved);
+                    if(Array.isArray(parsed) && parsed.length && parsed[0].host) {
+                        allDevices = parsed;
+                        renderDevices();
+                        showMsg(`💾 restored ${allDevices.length} devices`);
+                        return true;
+                    }
+                } catch(e) {}
+            }
+            return false;
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            if(e.target.files && e.target.files[0]) {
+                loadXml(e.target.files[0]);
+            }
+            fileInput.value = '';
+        });
+        clearBtn.addEventListener('click', clearAll);
+        searchBox.addEventListener('input', renderDevices);
+
+        if(!loadFromStorage()) {
+            renderDevices();
+        }
+    })();
+</script>
+</body>
+</html>
